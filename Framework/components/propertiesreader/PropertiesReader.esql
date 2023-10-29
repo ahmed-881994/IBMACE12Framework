@@ -1,0 +1,75 @@
+
+
+BROKER SCHEMA components.propertiesreader
+
+DECLARE CONFIG_DIR SHARED CHARACTER;
+DECLARE CONFIG_FILE SHARED CHARACTER;
+DECLARE PropertiesFileName EXTERNAL CHARACTER '';
+DECLARE PropertiesFileDirectory EXTERNAL CHARACTER '';
+DECLARE PROPERTIES_CACHE SHARED ROW;
+
+CREATE COMPUTE MODULE PropertiesReader_SetReadFileProperties
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CREATE FIELD OutputLocalEnvironment.Destination.File;
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		SET OutputLocalEnvironment.Destination.File.Directory = CONFIG_DIR;
+		SET OutputLocalEnvironment.Destination.File.Name = CONFIG_FILE;
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PropertiesReader_CacheProperties
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET PROPERTIES_CACHE = Environment.readProperties.JSON.Data;
+
+		DELETE FIELD Environment.readProperties;
+		SET Environment.Properties = PROPERTIES_CACHE;		
+
+
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE PropertiesReader_LoadCachedProperties
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET Environment.Properties = PROPERTIES_CACHE;
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE FILTER MODULE PropertiesReader_CheckCache
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF EXISTS(PROPERTIES_CACHE.[]) THEN
+			RETURN TRUE;
+		ELSE
+			SET CONFIG_DIR = getConfDir();
+			SET CONFIG_FILE = PropertiesFileName;
+			RETURN FALSE;
+		END IF;
+	END;
+END MODULE;
+
+CREATE FUNCTION getConfDir() RETURNS CHAR
+BEGIN
+	-- If the flow defined property PropertiesFileDirectory is filled return it
+	-- else return defualt directory based on OS:
+	-- Windows - c:\esb\config\
+	-- Unix (others) - /home/aceuser/
+	DECLARE osname CHAR Family;
+	DECLARE configDir CHAR PropertiesFileDirectory;
+	IF osname = 'WINDOWS' THEN
+		SET configDir = 'c:\esb\config\';
+	ELSE
+		SET configDir = '/home/aceuser/';
+	END IF;
+
+	IF (PropertiesFileDirectory IS NOT NULL) AND (PropertiesFileDirectory<> '') THEN
+		SET configDir = PropertiesFileDirectory;
+	END IF;
+
+	RETURN configDir;
+END;
