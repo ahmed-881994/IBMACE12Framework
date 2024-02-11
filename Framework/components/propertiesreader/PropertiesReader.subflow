@@ -65,6 +65,10 @@
         </propertyDescriptor>
       </propertyDescriptor>
     </propertyOrganizer>
-    <stickyBoard/>
+    <stickyBoard>
+      <stickyNote location="62,387">
+        <body xmi:type="utility:ConstantString" string="This Subflow reads a configuration file in JSON format&#xA;&#xA;and stores it in the cache. To reload the file either redeploy&#xA;&#xA;the app or restart the server.&#xA;&#xA;&#xA;Promoted properties:&#xA;&#xA;Propertiesfilename: Mandatory&#xA;&#xA;PropertiesFileDirectory: Optional"/>
+      </stickyNote>
+    </stickyBoard>
   </eClassifiers>
 </ecore:EPackage>
